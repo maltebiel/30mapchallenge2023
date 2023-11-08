@@ -1,0 +1,19 @@
+let testset=energimaaling
+| where TIMESTAMP > todatetime('2023-11-03T09:00:00Z') and TIMESTAMP < todatetime('2023-11-03T09:59:00Z');
+let testset_renamed = testset
+| project-rename LOCO_NR=EVN;
+let config = dim_togkonfig
+| distinct LK_TOG_NR, LOCO_NR
+| where isnotempty(LOCO_NR);
+let traininfo = dim_toginfo
+| project TOG_NR, EIER_NAVN
+| project-rename LK_TOG_NR = TOG_NR
+| where EIER_NAVN in ("Go-Ahead Norge AS","Flytoget AS", "Vygruppen AS")
+| distinct *;
+let joineddata = config
+| join kind = leftouter traininfo on LK_TOG_NR
+| where isnotempty(EIER_NAVN)
+| distinct LOCO_NR, EIER_NAVN;
+joineddata
+| join kind = leftouter (testset_renamed | project CPID, LOCO_NR, TIMESTAMP, latitude, longitude) on LOCO_NR
+| project 
