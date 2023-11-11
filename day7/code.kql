@@ -1,6 +1,5 @@
 let testset=energimaaling
-| where TIMESTAMP > todatetime('2023-11-03T09:00:00Z') and TIMESTAMP < todatetime('2023-11-03T09:59:00Z');
-let testset_renamed = testset
+| where TIMESTAMP > todatetime('2023-11-03T09:00:00Z') and TIMESTAMP < todatetime('2023-11-03T09:59:00Z')
 | project-rename LOCO_NR=EVN;
 let config = dim_togkonfig
 | distinct LK_TOG_NR, LOCO_NR
