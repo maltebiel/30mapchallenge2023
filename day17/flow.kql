@@ -1,0 +1,28 @@
+let testset=energimaaling
+| where TIMESTAMP > todatetime("2023-08-01T00:05:00Z") and TIMESTAMP < todatetime("2023-08-01T10:00:00Z")
+| project-rename LOCO_NR=EVN
+//| summarize arg_max(TIMESTAMP, *) by ID, bin(TIMESTAMP, 1m)
+//| project-away TIMESTAMP1
+;
+let config = dim_togkonfig
+| distinct LK_TOG_NR, LOCO_NR
+| where isnotempty(LOCO_NR);
+let traininfo = dim_toginfo
+| project TOG_NR
+, ENDESTASJON_NAVN
+| project-rename LK_TOG_NR = TOG_NR
+| where ENDESTASJON_NAVN in ("Oslo S")
+| distinct *;
+let joineddata = config
+| join kind = leftouter traininfo on LK_TOG_NR
+| where isnotempty(ENDESTASJON_NAVN)
+| distinct LOCO_NR, ENDESTASJON_NAVN
+;
+let joined_orig_data = joineddata
+| join kind = leftouter (testset | project CPID, LOCO_NR, TIMESTAMP, latitude, longitude) on LOCO_NR
+| project-away *1;
+let gethour = (dt:datetime) { datetime_part("Hour", dt) };
+let hexdata = joined_orig_data
+| extend hexID = geo_point_to_h3cell(longitude, latitude, 7)
+| where isnotempty(CPID);
+hexdata
